@@ -1,3 +1,5 @@
 {
-    "usingComponents": {}
+  "navigationBarTitleText": "猜盐",
+  "enableShareAppMessage": true,
+  "usingComponents": {}
 }

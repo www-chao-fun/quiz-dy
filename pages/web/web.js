@@ -7,25 +7,54 @@
 //
 // 也兼容从原生 login 页 redirectTo 回来时，通过 app.globalData.dyReturnPath
 // 指定回跳的 H5 路径，让 web-view 落回登录前所在的页面。
+//
+// 分享：H5 通过 tt.miniProgram.postMessage 上报当前 path，本页 onShareAppMessage
+// 把 path 写入分享链接，好友打开后落到同一 H5 页（对齐微信 caiyan 方案）。
 
 const app = getApp();
 
 const BASE_URL = 'https://xiaoce.fun';
-// 等 tt.login 的最长时间，超时就先打开页面（H5 端会以未登录态展示，
-// 用户后续可以在 H5 内点登录按钮触发原生授权页流程）
 const CODE_WAIT_MS = 1500;
+const DEFAULT_SHARE_TITLE = '猜盐';
+
+/** @type {((content: { title: string; path: string }) => void) | null} */
+let shareResolver = null;
+
+function normalizeH5Path(path) {
+  if (!path || typeof path !== 'string') return '/';
+  const trimmed = path.trim();
+  if (!trimmed) return '/';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    try {
+      const u = new URL(trimmed);
+      return u.pathname + u.search + u.hash;
+    } catch (e) {
+      return '/';
+    }
+  }
+  return trimmed.startsWith('/') ? trimmed : '/' + trimmed;
+}
+
+function buildShareContent(title, h5Path) {
+  const clean = normalizeH5Path(h5Path);
+  return {
+    title: title || DEFAULT_SHARE_TITLE,
+    path: '/pages/web/web?path=' + encodeURIComponent(clean),
+  };
+}
 
 Page({
   data: {
     src: '',
+    sharePath: '/',
+    shareTitle: DEFAULT_SHARE_TITLE,
+    webviewKey: 0,
   },
 
   onLoad(query) {
-    // 1) 优先用原生 login 页带回的 returnPath（用一次就清，避免后续误用）
     let targetPath = app.globalData.dyReturnPath || '';
     app.globalData.dyReturnPath = null;
 
-    // 2) 否则用 query.path（从首页按钮带过来）
     if (!targetPath && query && query.path) {
       try {
         targetPath = decodeURIComponent(query.path);
@@ -34,7 +63,9 @@ Page({
       }
     }
 
-    // 一键授权登录：用 globalData.dyCode（onLaunch 静默 tt.login 或原生 login 页的 fresh code）
+    const sharePath = normalizeH5Path(targetPath);
+    this.setData({ sharePath });
+
     Promise.race([
       app.globalData.dyCodePromise || Promise.resolve(null),
       new Promise((resolve) => setTimeout(() => resolve(null), CODE_WAIT_MS)),
@@ -48,14 +79,52 @@ Page({
     });
   },
 
-  // web-view 内 H5 调 tt.miniProgram.postMessage 发的消息会在这里聚合下发，
-  // 但只在用户返回 / 关闭 / 分享 / navigateBack 时才触发，**不能用于实时唤起 tt.pay**。
-  // 真正的支付流程已改为：H5 调 tt.miniProgram.navigateTo('/pages/pay/pay?...')，
-  // 由中转页 onLoad 同步调用 tt.pay。这里仅保留作为日志/兜底。
   onWebViewMessage(e) {
-    const list = (e && e.detail && e.detail.data) || [];
-    if (list.length) {
-      console.log('[quiz-dy web] webview message:', list);
+    const raw = (e && e.detail && e.detail.data) || [];
+    const list = Array.isArray(raw) ? raw : [raw];
+    if (!list.length) return;
+
+    let lastPath = this.data.sharePath;
+    let lastTitle = this.data.shareTitle;
+
+    for (let i = list.length - 1; i >= 0; i--) {
+      const msg = list[i];
+      if (!msg || msg.action !== 'navigate' || !msg.path) continue;
+
+      lastPath = normalizeH5Path(msg.path);
+      lastTitle = msg.title || DEFAULT_SHARE_TITLE;
+      this.setData({ sharePath: lastPath, shareTitle: lastTitle });
+      tt.setNavigationBarTitle({ title: lastTitle });
+      break;
     }
+
+    if (shareResolver) {
+      shareResolver(buildShareContent(lastTitle, lastPath));
+      shareResolver = null;
+    }
+  },
+
+  onShareAppMessage() {
+    tt.showLoading({ title: '正在准备分享...', mask: true });
+    this.setData({ webviewKey: this.data.webviewKey + 1 });
+
+    return new Promise((resolve) => {
+      shareResolver = (content) => {
+        tt.hideLoading();
+        resolve(content);
+      };
+
+      setTimeout(() => {
+        if (!shareResolver) return;
+        const fallback = buildShareContent(
+          this.data.shareTitle,
+          this.data.sharePath
+        );
+        tt.hideLoading();
+        console.warn('[quiz-dy web] share timeout fallback', fallback);
+        shareResolver(fallback);
+        shareResolver = null;
+      }, 500);
+    });
   },
 });
