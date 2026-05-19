@@ -8,7 +8,7 @@
   "window":{
     "backgroundTextStyle":"light",
     "navigationBarBackgroundColor": "#fff",
-    "navigationBarTitleText": "Mini Program",
+    "navigationBarTitleText": "猜盐",
     "navigationBarTextStyle":"black"
   }
 }
