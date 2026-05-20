@@ -1,3 +1,13 @@
 <view class="page">
-  <view class="tip">{{tip}}</view>
+  <block tt:if="{{loading}}">
+    <view class="tip">{{tip}}</view>
+  </block>
+  <block tt:else>
+    <view class="error-panel">
+      <view class="error-title">{{errorTitle}}</view>
+      <view class="error-detail" tt:if="{{errorDetail}}">{{errorDetail}}</view>
+      <view class="error-log" tt:if="{{errLogId}}">日志 ID：{{errLogId}}</view>
+      <button class="btn-back" bindtap="goBack">返回</button>
+    </view>
+  </block>
 </view>

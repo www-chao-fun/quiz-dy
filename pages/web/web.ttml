@@ -1,7 +1,6 @@
 <web-view
   tt:if="{{src}}"
   class="webview-container"
-  key="{{webviewKey}}"
   src="{{src}}"
   bindmessage="onWebViewMessage"
 ></web-view>

@@ -1,54 +1,77 @@
-// quiz-dy 小程序 web-view 中转页：把 H5（xiaoce-front）加载进来，
-// 并把抖音登录所需的临时 code 通过 URL 透传过去，由 H5 端的 dyAutoLogin
-// 接住完成自动登录（cookie 由后端 Set-Cookie 落到 web-view 浏览器会话里）。
-//
-// 入口路径：
-//   /pages/web/web?path=<encodeURIComponent(H5 路径，比如 "/?tab=daily")>
-//
-// 也兼容从原生 login 页 redirectTo 回来时，通过 app.globalData.dyReturnPath
-// 指定回跳的 H5 路径，让 web-view 落回登录前所在的页面。
-//
-// 分享：H5 通过 tt.miniProgram.postMessage 上报当前 path，本页 onShareAppMessage
-// 把 path 写入分享链接，好友打开后落到同一 H5 页（对齐微信 caiyan 方案）。
+// quiz-dy web-view：加载 H5，透传 dy_code；导航栏标题对齐微信 caiyan（onLoad 占位 + postMessage 更新）。
+// postMessage 仅在分享/返回/销毁时下发，SPA 内换页需 H5 持续 postMessage，离开 web-view 时才会同步到原生栏。
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/basic-ability/web-view-component
 
 const app = getApp();
 
 const BASE_URL = 'https://xiaoce.fun';
 const CODE_WAIT_MS = 1500;
 const DEFAULT_SHARE_TITLE = '猜盐';
+// 与微信 miniprogram/pages/index onLoad 一致，H5 标题尚未上报前的占位
+const WEBVIEW_PLACEHOLDER_TITLE = '网页浏览';
+
+const ENTRY_PATH_TITLE = {
+  '/?tab=daily': '每日挑战',
+  '/?tab=quiz': '测验',
+  '/?tab=multiplayer': '对战',
+};
 
 /** @type {((content: { title: string; path: string }) => void) | null} */
 let shareResolver = null;
 
-function normalizeH5Path(path) {
-  if (!path || typeof path !== 'string') return '/';
-  const trimmed = path.trim();
+function toH5Path(input) {
+  if (!input || typeof input !== 'string') return '/';
+  const trimmed = input.trim();
   if (!trimmed) return '/';
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    try {
-      const u = new URL(trimmed);
-      return u.pathname + u.search + u.hash;
-    } catch (e) {
-      return '/';
-    }
+  const base = trimmed.startsWith('http')
+    ? trimmed
+    : 'https://xiaoce.fun' + (trimmed.startsWith('/') ? trimmed : '/' + trimmed);
+  try {
+    const u = new URL(base);
+    u.searchParams.delete('dy_code');
+    return u.pathname + u.search + u.hash;
+  } catch (e) {
+    return '/';
   }
-  return trimmed.startsWith('/') ? trimmed : '/' + trimmed;
 }
 
-function buildShareContent(title, h5Path) {
-  const clean = normalizeH5Path(h5Path);
+function titleFromEntryPath(targetPath) {
+  if (!targetPath) return WEBVIEW_PLACEHOLDER_TITLE;
+  const pathOnly = toH5Path(targetPath).split('#')[0];
+  if (ENTRY_PATH_TITLE[pathOnly]) return ENTRY_PATH_TITLE[pathOnly];
+  return WEBVIEW_PLACEHOLDER_TITLE;
+}
+
+function applyNavTitle(page, title) {
+  const t = (title && String(title).trim()) || WEBVIEW_PLACEHOLDER_TITLE;
+  page.setData({ shareTitle: t });
+  tt.setNavigationBarTitle({ title: t });
+}
+
+function buildShare(title, h5Path) {
   return {
     title: title || DEFAULT_SHARE_TITLE,
-    path: '/pages/web/web?path=' + encodeURIComponent(clean),
+    path: '/pages/web/web?path=' + encodeURIComponent(toH5Path(h5Path)),
   };
+}
+
+function latestNavigate(list) {
+  for (let i = list.length - 1; i >= 0; i--) {
+    const msg = list[i];
+    if (msg && msg.action === 'navigate' && msg.path) {
+      return {
+        path: toH5Path(msg.path),
+        title: msg.title || DEFAULT_SHARE_TITLE,
+      };
+    }
+  }
+  return null;
 }
 
 Page({
   data: {
     src: '',
-    sharePath: '/',
-    shareTitle: DEFAULT_SHARE_TITLE,
-    webviewKey: 0,
+    shareTitle: WEBVIEW_PLACEHOLDER_TITLE,
   },
 
   onLoad(query) {
@@ -63,8 +86,17 @@ Page({
       }
     }
 
-    const sharePath = normalizeH5Path(targetPath);
-    this.setData({ sharePath });
+    let initialTitle = titleFromEntryPath(targetPath);
+    if (query && query.title) {
+      try {
+        initialTitle = decodeURIComponent(query.title) || initialTitle;
+      } catch (e) {
+        initialTitle = query.title || initialTitle;
+      }
+    }
+    applyNavTitle(this, initialTitle);
+
+    this._sharePath = toH5Path(targetPath);
 
     Promise.race([
       app.globalData.dyCodePromise || Promise.resolve(null),
@@ -79,52 +111,40 @@ Page({
     });
   },
 
+  onShow() {
+    // 从 login/pay 等原生页返回：恢复上次 H5 同步的标题（微信侧靠 data.shareTitle + 自定义导航栏）
+    applyNavTitle(this, this.data.shareTitle);
+  },
+
   onWebViewMessage(e) {
     const raw = (e && e.detail && e.detail.data) || [];
     const list = Array.isArray(raw) ? raw : [raw];
-    if (!list.length) return;
+    const nav = latestNavigate(list);
+    if (!nav) return;
 
-    let lastPath = this.data.sharePath;
-    let lastTitle = this.data.shareTitle;
-
-    for (let i = list.length - 1; i >= 0; i--) {
-      const msg = list[i];
-      if (!msg || msg.action !== 'navigate' || !msg.path) continue;
-
-      lastPath = normalizeH5Path(msg.path);
-      lastTitle = msg.title || DEFAULT_SHARE_TITLE;
-      this.setData({ sharePath: lastPath, shareTitle: lastTitle });
-      tt.setNavigationBarTitle({ title: lastTitle });
-      break;
-    }
+    this._sharePath = nav.path;
+    applyNavTitle(this, nav.title);
 
     if (shareResolver) {
-      shareResolver(buildShareContent(lastTitle, lastPath));
+      shareResolver(buildShare(this.data.shareTitle, nav.path));
       shareResolver = null;
     }
   },
 
-  onShareAppMessage() {
-    tt.showLoading({ title: '正在准备分享...', mask: true });
-    this.setData({ webviewKey: this.data.webviewKey + 1 });
-
+  onShareAppMessage(options) {
+    let path = this._sharePath || '/';
+    if (options && options.webViewUrl) {
+      const fromUrl = toH5Path(options.webViewUrl);
+      if (fromUrl && fromUrl !== '/') path = fromUrl;
+    }
+    const title = this.data.shareTitle;
     return new Promise((resolve) => {
-      shareResolver = (content) => {
-        tt.hideLoading();
-        resolve(content);
-      };
-
+      shareResolver = (content) => resolve(content);
       setTimeout(() => {
         if (!shareResolver) return;
-        const fallback = buildShareContent(
-          this.data.shareTitle,
-          this.data.sharePath
-        );
-        tt.hideLoading();
-        console.warn('[quiz-dy web] share timeout fallback', fallback);
-        shareResolver(fallback);
+        shareResolver(buildShare(title, this._sharePath || path));
         shareResolver = null;
-      }, 500);
+      }, 0);
     });
   },
 });

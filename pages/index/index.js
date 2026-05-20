@@ -9,14 +9,30 @@ const TAB_TO_PATH = {
   multiplayer: '/?tab=multiplayer',
 };
 
+const TAB_TO_TITLE = {
+  daily: '每日挑战',
+  quiz: '测验',
+  multiplayer: '对战',
+};
+
+// 与 app.json window.navigationBarTitleText 一致；从 web-view 返回时需主动恢复
+const INDEX_NAV_TITLE = '猜盐';
+
 Page({
+  onShow() {
+    tt.setNavigationBarTitle({ title: INDEX_NAV_TITLE });
+  },
+
   onTapEntry(e) {
     const dataset = (e && e.currentTarget && e.currentTarget.dataset) || {};
     const tab = dataset.tab || 'daily';
     const path = TAB_TO_PATH[tab] || '/';
 
+    const title = TAB_TO_TITLE[tab] || '猜盐';
     tt.navigateTo({
-      url: `/pages/web/web?path=${encodeURIComponent(path)}`,
+      url:
+        `/pages/web/web?path=${encodeURIComponent(path)}` +
+        `&title=${encodeURIComponent(title)}`,
       fail: (err) => {
         console.warn('[quiz-dy index] navigateTo web fail:', err);
         tt.showToast({ title: '打开失败，请重试', icon: 'none' });
