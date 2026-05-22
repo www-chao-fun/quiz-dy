@@ -3,10 +3,11 @@
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/basic-ability/web-view-component
 
 const app = getApp();
+const shareUtil = require('../../utils/share.js');
 
-const BASE_URL = 'https://xiaoce.fun';
+const BASE_URL = shareUtil.H5_ORIGIN;
 const CODE_WAIT_MS = 1500;
-const DEFAULT_SHARE_TITLE = '猜盐';
+const DEFAULT_SHARE_TITLE = shareUtil.DEFAULT_SHARE_TITLE;
 // 与微信 miniprogram/pages/index onLoad 一致，H5 标题尚未上报前的占位
 const WEBVIEW_PLACEHOLDER_TITLE = '网页浏览';
 
@@ -19,21 +20,8 @@ const ENTRY_PATH_TITLE = {
 /** @type {((content: { title: string; path: string }) => void) | null} */
 let shareResolver = null;
 
-function toH5Path(input) {
-  if (!input || typeof input !== 'string') return '/';
-  const trimmed = input.trim();
-  if (!trimmed) return '/';
-  const base = trimmed.startsWith('http')
-    ? trimmed
-    : 'https://xiaoce.fun' + (trimmed.startsWith('/') ? trimmed : '/' + trimmed);
-  try {
-    const u = new URL(base);
-    u.searchParams.delete('dy_code');
-    return u.pathname + u.search + u.hash;
-  } catch (e) {
-    return '/';
-  }
-}
+const toH5Path = shareUtil.toH5Path;
+const buildShare = shareUtil.buildShare;
 
 function titleFromEntryPath(targetPath) {
   if (!targetPath) return WEBVIEW_PLACEHOLDER_TITLE;
@@ -46,13 +34,6 @@ function applyNavTitle(page, title) {
   const t = (title && String(title).trim()) || WEBVIEW_PLACEHOLDER_TITLE;
   page.setData({ shareTitle: t });
   tt.setNavigationBarTitle({ title: t });
-}
-
-function buildShare(title, h5Path) {
-  return {
-    title: title || DEFAULT_SHARE_TITLE,
-    path: '/pages/web/web?path=' + encodeURIComponent(toH5Path(h5Path)),
-  };
 }
 
 function latestNavigate(list) {

@@ -4,7 +4,8 @@
     "pages/web/web",
     "pages/login/login",
     "pages/pay/pay",
-    "pages/order/order"
+    "pages/order/order",
+    "pages/share/share"
   ],
   "window":{
     "backgroundTextStyle":"light",
