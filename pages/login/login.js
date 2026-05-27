@@ -11,11 +11,54 @@ Page({
     loading: false,
     // H5 跳过来时通过 query.return 带过来的回跳路径，登录成功后让 web-view 落回原页面
     returnPath: '',
+    mode: 'login',
   },
 
   onLoad(query) {
     const ret = query && query.return ? decodeURIComponent(query.return) : '';
-    this.setData({ returnPath: ret });
+    const mode = query && query.mode === 'verify' ? 'verify' : 'login';
+    this.setData({ returnPath: ret, mode });
+  },
+
+  // 身份验证（改密 / step-up）：仅 tt.login，回跳 H5 时带 dy_verify_code
+  onTapVerify() {
+    if (this.data.loading) return;
+    this.setData({ loading: true });
+
+    const returnPath = this.data.returnPath;
+
+    tt.login({
+      success: (res) => {
+        if (!res || !res.code) {
+          console.warn('[quiz-dy login] tt.login no code:', res);
+          tt.showToast({ title: '授权失败，请重试', icon: 'none' });
+          this.setData({ loading: false });
+          return;
+        }
+
+        app.globalData.dyVerifyCode = res.code;
+        app.globalData.dyReturnPath = returnPath;
+        app.globalData.dyCode = null;
+        app.globalData.dyCodePromise = Promise.resolve(null);
+        app.globalData.dyPhoneCode = null;
+        app.globalData.dyPhoneEncryptedData = null;
+        app.globalData.dyPhoneIv = null;
+
+        tt.redirectTo({
+          url: '/pages/web/web',
+          fail: (err) => {
+            console.warn('[quiz-dy login] redirectTo fail:', err);
+            this.setData({ loading: false });
+            tt.showToast({ title: '跳转失败', icon: 'none' });
+          },
+        });
+      },
+      fail: (err) => {
+        console.warn('[quiz-dy login] tt.login fail:', err);
+        tt.showToast({ title: '已取消授权', icon: 'none' });
+        this.setData({ loading: false });
+      },
+    });
   },
 
   // 一键授权登录：调 tt.login 拿 fresh code，写到 globalData，然后 redirectTo 回 index
@@ -38,10 +81,11 @@ Page({
         app.globalData.dyCode = res.code;
         app.globalData.dyCodePromise = Promise.resolve(res.code);
         app.globalData.dyReturnPath = returnPath;
-        // 清掉手机号登录的字段，避免老数据残留
+        // 清掉其它模式的字段，避免老数据残留
         app.globalData.dyPhoneCode = null;
         app.globalData.dyPhoneEncryptedData = null;
         app.globalData.dyPhoneIv = null;
+        app.globalData.dyVerifyCode = null;
 
         // 注意：首屏 /pages/index/index 已经改成原生入口按钮页（抖音不允许首屏直接是 web-view），
         // 这里要回跳到承载 web-view 的中转页 /pages/web/web，由它读取 dyReturnPath 落回原 H5 页面。

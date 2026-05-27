@@ -79,6 +79,16 @@ Page({
 
     this._sharePath = toH5Path(targetPath);
 
+    const verifyCode = app.globalData.dyVerifyCode;
+    app.globalData.dyVerifyCode = null;
+    if (verifyCode) {
+      let url = BASE_URL + (targetPath || '');
+      const sep = url.includes('?') ? '&' : '?';
+      url += `${sep}dy_verify_code=${encodeURIComponent(verifyCode)}`;
+      this.setData({ src: url });
+      return;
+    }
+
     Promise.race([
       app.globalData.dyCodePromise || Promise.resolve(null),
       new Promise((resolve) => setTimeout(() => resolve(null), CODE_WAIT_MS)),
