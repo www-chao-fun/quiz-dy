@@ -1,0 +1,62 @@
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 112rpx 56rpx 48rpx;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brand {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #e48d21;
+  margin-bottom: 24rpx;
+}
+
+.desc {
+  min-height: 80rpx;
+  color: #666;
+  font-size: 28rpx;
+  line-height: 1.5;
+  text-align: center;
+  margin-bottom: 72rpx;
+}
+
+.primary-btn,
+.plain-btn {
+  width: 100%;
+  max-width: 560rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+}
+
+.plain-btn {
+  margin-top: 28rpx;
+}
+
+.error-panel {
+  width: 100%;
+  max-width: 600rpx;
+  margin-bottom: 24rpx;
+}
+
+.error-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.5;
+  text-align: center;
+  margin-bottom: 18rpx;
+}
+
+.error-detail {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+  text-align: center;
+  word-break: break-all;
+}

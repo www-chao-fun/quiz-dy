@@ -23,6 +23,15 @@ let shareResolver = null;
 const toH5Path = shareUtil.toH5Path;
 const buildShare = shareUtil.buildShare;
 
+function appendQuery(url, params) {
+  const hashIndex = url.indexOf('#');
+  const base = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
+  const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
+  const query = params.filter(Boolean).join('&');
+  if (!query) return url;
+  return base + (base.includes('?') ? '&' : '?') + query + hash;
+}
+
 function titleFromEntryPath(targetPath) {
   if (!targetPath) return WEBVIEW_PLACEHOLDER_TITLE;
   const pathOnly = toH5Path(targetPath).split('#')[0];
@@ -67,6 +76,12 @@ Page({
       }
     }
 
+    const rewardAdResult = app.globalData.dyRewardAdVipResult;
+    app.globalData.dyRewardAdVipResult = null;
+    if (rewardAdResult && rewardAdResult.returnPath) {
+      targetPath = rewardAdResult.returnPath;
+    }
+
     let initialTitle = titleFromEntryPath(targetPath);
     if (query && query.title) {
       try {
@@ -79,12 +94,21 @@ Page({
 
     this._sharePath = toH5Path(targetPath);
 
+    if (rewardAdResult && rewardAdResult.result) {
+      const url = appendQuery(BASE_URL + (targetPath || ''), [
+        'dy_reward_ad_vip=' + encodeURIComponent(rewardAdResult.result),
+        rewardAdResult.due ? 'dy_reward_ad_due=' + encodeURIComponent(rewardAdResult.due) : '',
+      ]);
+      this.setData({ src: url });
+      return;
+    }
+
     const verifyCode = app.globalData.dyVerifyCode;
     app.globalData.dyVerifyCode = null;
     if (verifyCode) {
-      let url = BASE_URL + (targetPath || '');
-      const sep = url.includes('?') ? '&' : '?';
-      url += `${sep}dy_verify_code=${encodeURIComponent(verifyCode)}`;
+      const url = appendQuery(BASE_URL + (targetPath || ''), [
+        'dy_verify_code=' + encodeURIComponent(verifyCode),
+      ]);
       this.setData({ src: url });
       return;
     }
@@ -95,8 +119,7 @@ Page({
     ]).then((code) => {
       let url = BASE_URL + (targetPath || '');
       if (code) {
-        const sep = url.includes('?') ? '&' : '?';
-        url += `${sep}dy_code=${encodeURIComponent(code)}`;
+        url = appendQuery(url, ['dy_code=' + encodeURIComponent(code)]);
       }
       this.setData({ src: url });
     });
