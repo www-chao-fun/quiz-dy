@@ -23,6 +23,19 @@ function decodeQuery(value, fallback) {
   }
 }
 
+function logShareParamsInvalid(query, rawPath, h5Path, title, hint) {
+  console.warn('[Share] 分享参数无效', {
+    query,
+    queryDecoded: {
+      path: query && query.path ? decodeQuery(query.path, '') : '',
+      title: decodeQuery(query && query.title, ''),
+      hint: decodeQuery(query && query.hint, ''),
+    },
+    resolved: { rawPath, h5Path, title, hint },
+    pageStack: getCurrentPages().map(function (p) { return p.route; }),
+  });
+}
+
 Page({
   data: {
     shareTitle: shareUtil.DEFAULT_SHARE_TITLE,
@@ -36,6 +49,7 @@ Page({
 
     const h5Path = shareUtil.toH5Path(rawPath || '/');
     if (!rawPath || h5Path === '/') {
+      logShareParamsInvalid(query, rawPath, h5Path, title, hint);
       tt.showToast({ title: '分享参数无效', icon: 'none' });
       setTimeout(() => this.goBack(), 1500);
       return;
