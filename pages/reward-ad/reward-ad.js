@@ -96,6 +96,8 @@ Page({
     this._token = query && query.token ? decodeParam(query.token) : '';
     this._returnPath = query && query.return ? decodeParam(query.return) : '/';
     this._scene = query && query.scene ? decodeParam(query.scene) : 'vip_modal';
+    this._autoStart = query && query.autoStart === '1';
+    this._autoStarted = false;
     this._cookieHeader = '';
     this._nonce = '';
     this._ad = null;
@@ -189,10 +191,17 @@ Page({
         ready: true,
         tip: '观看完整广告后，可领取 10 分钟会员',
       });
+      this.autoStartAdIfNeeded();
     } catch (e) {
       console.warn('[quiz-dy reward-ad] getTicket failed', e);
       this.showError('登录态同步失败', formatError(e, '请返回后重新打开会员弹窗'));
     }
+  },
+
+  autoStartAdIfNeeded() {
+    if (!this._autoStart || this._autoStarted) return;
+    this._autoStarted = true;
+    this.handleWatchAd();
   },
 
   async handleWatchAd() {
