@@ -5,6 +5,7 @@
     "pages/login/login",
     "pages/pay/pay",
     "pages/order/order",
+    "pages/reward-ad/reward-ad",
     "pages/share/share"
   ],
   "window":{

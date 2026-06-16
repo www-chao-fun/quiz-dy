@@ -1,0 +1,22 @@
+<view class="page">
+  <view class="brand">猜盐会员</view>
+  <view class="desc">{{tip}}</view>
+
+  <button
+    tt:if="{{!errorTitle}}"
+    class="primary-btn"
+    type="primary"
+    loading="{{submitting || loading}}"
+    disabled="{{!ready || submitting || loading}}"
+    bindtap="handleWatchAd"
+  >
+    看广告领10分钟会员
+  </button>
+
+  <view class="error-panel" tt:if="{{errorTitle}}">
+    <view class="error-title">{{errorTitle}}</view>
+    <view class="error-detail" tt:if="{{errorDetail}}">{{errorDetail}}</view>
+  </view>
+
+  <button class="plain-btn" bindtap="goBack">返回</button>
+</view>

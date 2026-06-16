@@ -8,6 +8,7 @@ App({
     dyCode: null,
     // 给页面 await 用的；不管成功失败都 resolve（失败 resolve null），避免页面写 try/catch
     dyCodePromise: null,
+    dyRewardAdVipResult: null,
   },
 
   onLaunch() {
