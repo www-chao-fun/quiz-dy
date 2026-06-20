@@ -1,4 +1,5 @@
 {
   "navigationBarTitleText": "猜盐",
+  "disableScroll": true,
   "usingComponents": {}
 }

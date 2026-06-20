@@ -20,9 +20,15 @@ function toH5Path(input) {
 }
 
 function buildShare(title, h5Path) {
+  const shareTitle = (title && String(title).trim()) || DEFAULT_SHARE_TITLE;
+  const path = toH5Path(h5Path);
   return {
-    title: (title && String(title).trim()) || DEFAULT_SHARE_TITLE,
-    path: '/pages/web/web?path=' + encodeURIComponent(toH5Path(h5Path)),
+    title: shareTitle,
+    path:
+      '/pages/index/index?path=' +
+      encodeURIComponent(path) +
+      '&title=' +
+      encodeURIComponent(shareTitle),
   };
 }
 

@@ -71,7 +71,8 @@ Page({
 
   goBack() {
     const fallback =
-      '/pages/web/web?path=' + encodeURIComponent(this._h5Path || '/');
+      (this._sharePayload && this._sharePayload.path) ||
+      shareUtil.buildShare(shareUtil.DEFAULT_SHARE_TITLE, this._h5Path || '/').path;
     tt.navigateBack({
       fail: () => {
         tt.redirectTo({ url: fallback });

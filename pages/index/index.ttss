@@ -1,52 +1,166 @@
 .page {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 160rpx 60rpx 60rpx;
+  justify-content: center;
   min-height: 100vh;
   box-sizing: border-box;
-  background: #fff;
+  background: #fffcf8;
 }
 
-.brand {
-  font-size: 72rpx;
-  font-weight: 700;
-  color: #e48d21;
-  margin-bottom: 16rpx;
-  letter-spacing: 4rpx;
-}
-
-.desc {
-  font-size: 28rpx;
-  color: #666;
-  margin-bottom: 120rpx;
-}
-
-.btn-group {
+.launch,
+.offline {
   width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
 
-.entry-btn {
-  width: 100%;
-  max-width: 560rpx;
-  height: 96rpx;
-  line-height: 96rpx;
-  border-radius: 48rpx;
-  font-size: 34rpx;
-  margin-bottom: 32rpx;
+.logo-card {
+  width: 256rpx;
+  height: 256rpx;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 24rpx 52rpx rgba(228, 141, 33, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-box {
+  position: relative;
+  width: 172rpx;
+  height: 172rpx;
+  overflow: hidden;
+}
+
+.logo {
+  width: 172rpx;
+  height: 172rpx;
+}
+
+.logo-base {
+  opacity: 0.26;
+}
+
+.logo-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  overflow: hidden;
+  animation: logoFill 1000ms ease-in-out forwards;
+}
+
+.logo-fill-img {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+@keyframes logoFill {
+  0% {
+    height: 0;
+  }
+  100% {
+    height: 172rpx;
+  }
+}
+
+.offline {
+  flex-direction: column;
+  padding: 0 56rpx;
+  background: #fff;
+  text-align: center;
+}
+
+.offline-icon {
+  position: relative;
+  width: 104rpx;
+  height: 104rpx;
+  margin-bottom: 36rpx;
+}
+
+.wifi-arc {
+  position: absolute;
+  left: 50%;
+  border-style: solid;
+  border-color: #e48d21 transparent transparent transparent;
+  transform: translateX(-50%);
+}
+
+.wifi-arc-large {
+  top: 16rpx;
+  width: 88rpx;
+  height: 88rpx;
+  border-width: 9rpx 9rpx 0 9rpx;
+  border-radius: 88rpx 88rpx 0 0;
+}
+
+.wifi-arc-small {
+  top: 48rpx;
+  width: 48rpx;
+  height: 48rpx;
+  border-width: 9rpx 9rpx 0 9rpx;
+  border-radius: 48rpx 48rpx 0 0;
+}
+
+.wifi-dot {
+  position: absolute;
+  left: 50%;
+  bottom: 14rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #e48d21;
+  transform: translateX(-50%);
+}
+
+.wifi-slash {
+  position: absolute;
+  left: 49rpx;
+  top: 0;
+  width: 8rpx;
+  height: 108rpx;
+  border-radius: 999rpx;
+  background: #e48d21;
+  transform: rotate(-42deg);
+  box-shadow: 0 0 0 5rpx #fff;
+}
+
+.offline-title {
+  font-size: 40rpx;
+  line-height: 56rpx;
+  font-weight: 700;
+  color: #1f1f1f;
+  margin-bottom: 16rpx;
+}
+
+.offline-desc {
+  font-size: 28rpx;
+  line-height: 42rpx;
+  color: #777;
+  margin-bottom: 44rpx;
+}
+
+.retry-btn {
+  min-width: 176rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  padding: 0 40rpx;
+  border-radius: 40rpx;
+  font-size: 30rpx;
   background: #e48d21;
   color: #fff;
   border: none;
 }
 
-.entry-btn::after {
+.retry-btn::after {
   border: none;
 }
 
-.entry-btn.button-hover {
+.retry-btn.button-hover {
   background: #c97810;
-  color: #fff;
 }

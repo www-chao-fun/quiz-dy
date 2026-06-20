@@ -87,7 +87,7 @@ Page({
         app.globalData.dyPhoneIv = null;
         app.globalData.dyVerifyCode = null;
 
-        // 注意：首屏 /pages/index/index 已经改成原生入口按钮页（抖音不允许首屏直接是 web-view），
+        // 注意：首屏 /pages/index/index 已经改成原生加载页（抖音不允许首屏直接是 web-view），
         // 这里要回跳到承载 web-view 的中转页 /pages/web/web，由它读取 dyReturnPath 落回原 H5 页面。
         tt.redirectTo({
           url: '/pages/web/web',

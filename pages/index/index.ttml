@@ -1,16 +1,32 @@
 <view class="page">
-  <view class="brand">猜盐</view>
-  <view class="desc">把信息玩起来</view>
+  <view tt:if="{{!offline}}" class="launch">
+    <view class="logo-card">
+      <view class="logo-box">
+        <image
+          class="logo logo-base"
+          src="/assets/branding/xiaoce_logo.png"
+          mode="aspectFit"
+        />
+        <view class="logo-fill">
+          <image
+            class="logo logo-fill-img"
+            src="/assets/branding/xiaoce_logo.png"
+            mode="aspectFit"
+          />
+        </view>
+      </view>
+    </view>
+  </view>
 
-  <view class="btn-group">
-    <button class="entry-btn" data-tab="daily" bindtap="onTapEntry">
-      每日挑战
-    </button>
-    <button class="entry-btn" data-tab="quiz" bindtap="onTapEntry">
-      测验
-    </button>
-    <button class="entry-btn" data-tab="multiplayer" bindtap="onTapEntry">
-      对战
-    </button>
+  <view tt:else class="offline">
+    <view class="offline-icon">
+      <view class="wifi-arc wifi-arc-large"></view>
+      <view class="wifi-arc wifi-arc-small"></view>
+      <view class="wifi-dot"></view>
+      <view class="wifi-slash"></view>
+    </view>
+    <view class="offline-title">当前网络不可用</view>
+    <view class="offline-desc">连接恢复后会自动进入首页</view>
+    <button class="retry-btn" bindtap="onTapRetry">重试</button>
   </view>
 </view>
