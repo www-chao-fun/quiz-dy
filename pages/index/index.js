@@ -20,8 +20,8 @@ const TAB_TO_TITLE = {
 
 // 与 app.json window.navigationBarTitleText 一致；从 web-view 返回时需主动恢复
 const INDEX_NAV_TITLE = '猜盐';
-const NETWORK_RETRY_MS = 3000;
-const NETWORK_PROBE_TIMEOUT_MS = 4000;
+const NETWORK_RETRY_MS = 2000;
+const NETWORK_PROBE_TIMEOUT_MS = 3000;
 const NETWORK_PROBE_URL = `${shareUtil.H5_ORIGIN}/favicon.ico`;
 
 function hasNetworkType() {
@@ -48,7 +48,7 @@ function probeNetwork() {
       resolve(online);
     };
 
-    const timer = setTimeout(() => done(false), NETWORK_PROBE_TIMEOUT_MS + 1000);
+    const timer = setTimeout(() => done(false), NETWORK_PROBE_TIMEOUT_MS + 500);
 
     tt.request({
       url: NETWORK_PROBE_URL,
@@ -125,8 +125,9 @@ Page({
     this.setData({ offline: false });
 
     const h5Path = this._targetPath || '/';
-    const online = await hasNetwork();
+    // 预拼 web-view URL 与探活并行，不阻塞跳转
     this._prebuildWebViewSrc(h5Path);
+    const online = await hasNetwork();
     if (!online) {
       this._entering = false;
       this._showOffline();
