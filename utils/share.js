@@ -37,10 +37,28 @@ function toH5AbsoluteUrl(h5Path) {
   return H5_ORIGIN + (p.startsWith('/') ? p : '/' + p);
 }
 
+function appendQuery(url, params) {
+  const hashIndex = url.indexOf('#');
+  const base = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
+  const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
+  const query = params.filter(Boolean).join('&');
+  if (!query) return url;
+  return base + (base.includes('?') ? '&' : '?') + query + hash;
+}
+
+/** 拼 web-view 的 H5 src；extraParams 形如 ['dy_code=xxx'] */
+function buildWebViewSrc(h5Path, extraParams) {
+  const url = toH5AbsoluteUrl(h5Path || '/');
+  if (!extraParams || !extraParams.length) return url;
+  return appendQuery(url, extraParams);
+}
+
 module.exports = {
   H5_ORIGIN,
   DEFAULT_SHARE_TITLE,
   toH5Path,
   buildShare,
   toH5AbsoluteUrl,
+  appendQuery,
+  buildWebViewSrc,
 };

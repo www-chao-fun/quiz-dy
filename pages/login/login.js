@@ -39,7 +39,7 @@ Page({
         app.globalData.dyVerifyCode = res.code;
         app.globalData.dyReturnPath = returnPath;
         app.globalData.dyCode = null;
-        app.globalData.dyCodePromise = Promise.resolve(null);
+        app.globalData.prebuiltWebViewSrc = null;
         app.globalData.dyPhoneCode = null;
         app.globalData.dyPhoneEncryptedData = null;
         app.globalData.dyPhoneIv = null;
@@ -77,10 +77,9 @@ Page({
           return;
         }
 
-        // 把 fresh code 与 returnPath 塞进 globalData，让 web 页 onLoad 用上
         app.globalData.dyCode = res.code;
-        app.globalData.dyCodePromise = Promise.resolve(res.code);
         app.globalData.dyReturnPath = returnPath;
+        app.globalData.prebuiltWebViewSrc = null;
         // 清掉其它模式的字段，避免老数据残留
         app.globalData.dyPhoneCode = null;
         app.globalData.dyPhoneEncryptedData = null;

@@ -1,5 +1,5 @@
 // quiz-dy 小程序首页：抖音不允许首屏直接是 web-view，所以首页保持原生加载页。
-// 网络可用且启动动画结束后，再 redirectTo 到 /pages/web/web，由它去加载 H5。
+// 检测到网络可用后立即 redirectTo 到 /pages/web/web，由它去加载 H5。
 
 const shareUtil = require('../../utils/share.js');
 
@@ -20,14 +20,9 @@ const TAB_TO_TITLE = {
 
 // 与 app.json window.navigationBarTitleText 一致；从 web-view 返回时需主动恢复
 const INDEX_NAV_TITLE = '猜盐';
-const LAUNCH_ANIMATION_MS = 1000;
 const NETWORK_RETRY_MS = 3000;
 const NETWORK_PROBE_TIMEOUT_MS = 4000;
 const NETWORK_PROBE_URL = `${shareUtil.H5_ORIGIN}/favicon.ico`;
-
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function hasNetworkType() {
   return new Promise((resolve) => {
@@ -118,14 +113,20 @@ Page({
     this._clearNetworkRetry();
   },
 
+  _prebuildWebViewSrc(h5Path) {
+    const app = getApp();
+    app.globalData.prebuiltWebViewSrc = shareUtil.buildWebViewSrc(h5Path);
+  },
+
   async _startLaunch() {
     if (this._entering) return;
     this._entering = true;
     this._clearNetworkRetry();
     this.setData({ offline: false });
 
-    const results = await Promise.all([hasNetwork(), wait(LAUNCH_ANIMATION_MS)]);
-    const online = results[0];
+    const h5Path = this._targetPath || '/';
+    const online = await hasNetwork();
+    this._prebuildWebViewSrc(h5Path);
     if (!online) {
       this._entering = false;
       this._showOffline();

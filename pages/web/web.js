@@ -1,13 +1,12 @@
-// quiz-dy web-view：加载 H5，透传 dy_code；导航栏标题对齐微信 caiyan（onLoad 占位 + postMessage 更新）。
+// quiz-dy web-view：冷启动由 index 预拼 src；登录/验证回跳单独透传 code。
 // postMessage 仅在分享/返回/销毁时下发，SPA 内换页需 H5 持续 postMessage，离开 web-view 时才会同步到原生栏。
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/basic-ability/web-view-component
 
 const app = getApp();
 const shareUtil = require('../../utils/share.js');
 
-const BASE_URL = shareUtil.H5_ORIGIN;
-const CODE_WAIT_MS = 1500;
 const DEFAULT_SHARE_TITLE = shareUtil.DEFAULT_SHARE_TITLE;
+const buildWebViewSrc = shareUtil.buildWebViewSrc;
 // 与微信 miniprogram/pages/index onLoad 一致，H5 标题尚未上报前的占位
 const WEBVIEW_PLACEHOLDER_TITLE = '网页浏览';
 
@@ -22,15 +21,6 @@ let shareResolver = null;
 
 const toH5Path = shareUtil.toH5Path;
 const buildShare = shareUtil.buildShare;
-
-function appendQuery(url, params) {
-  const hashIndex = url.indexOf('#');
-  const base = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
-  const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
-  const query = params.filter(Boolean).join('&');
-  if (!query) return url;
-  return base + (base.includes('?') ? '&' : '?') + query + hash;
-}
 
 function titleFromEntryPath(targetPath) {
   if (!targetPath) return WEBVIEW_PLACEHOLDER_TITLE;
@@ -95,33 +85,46 @@ Page({
     this._sharePath = toH5Path(targetPath);
 
     if (rewardAdResult && rewardAdResult.result) {
-      const url = appendQuery(BASE_URL + (targetPath || ''), [
-        'dy_reward_ad_vip=' + encodeURIComponent(rewardAdResult.result),
-        rewardAdResult.due ? 'dy_reward_ad_due=' + encodeURIComponent(rewardAdResult.due) : '',
-      ]);
-      this.setData({ src: url });
+      app.globalData.prebuiltWebViewSrc = null;
+      this.setData({
+        src: buildWebViewSrc(targetPath, [
+          'dy_reward_ad_vip=' + encodeURIComponent(rewardAdResult.result),
+          rewardAdResult.due
+            ? 'dy_reward_ad_due=' + encodeURIComponent(rewardAdResult.due)
+            : '',
+        ]),
+      });
       return;
     }
 
     const verifyCode = app.globalData.dyVerifyCode;
     app.globalData.dyVerifyCode = null;
     if (verifyCode) {
-      const url = appendQuery(BASE_URL + (targetPath || ''), [
-        'dy_verify_code=' + encodeURIComponent(verifyCode),
-      ]);
-      this.setData({ src: url });
+      app.globalData.prebuiltWebViewSrc = null;
+      this.setData({
+        src: buildWebViewSrc(targetPath, [
+          'dy_verify_code=' + encodeURIComponent(verifyCode),
+        ]),
+      });
       return;
     }
 
-    Promise.race([
-      app.globalData.dyCodePromise || Promise.resolve(null),
-      new Promise((resolve) => setTimeout(() => resolve(null), CODE_WAIT_MS)),
-    ]).then((code) => {
-      let url = BASE_URL + (targetPath || '');
-      if (code) {
-        url = appendQuery(url, ['dy_code=' + encodeURIComponent(code)]);
-      }
-      this.setData({ src: url });
+    const dyCode = app.globalData.dyCode;
+    app.globalData.dyCode = null;
+    if (dyCode) {
+      app.globalData.prebuiltWebViewSrc = null;
+      this.setData({
+        src: buildWebViewSrc(targetPath, [
+          'dy_code=' + encodeURIComponent(dyCode),
+        ]),
+      });
+      return;
+    }
+
+    const prebuilt = app.globalData.prebuiltWebViewSrc;
+    app.globalData.prebuiltWebViewSrc = null;
+    this.setData({
+      src: prebuilt || buildWebViewSrc(targetPath),
     });
   },
 
