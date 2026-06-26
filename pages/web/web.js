@@ -121,6 +121,24 @@ Page({
       return;
     }
 
+    const phoneCode = app.globalData.dyPhoneCode;
+    const phoneData = app.globalData.dyPhoneEncryptedData;
+    const phoneIv = app.globalData.dyPhoneIv;
+    app.globalData.dyPhoneCode = null;
+    app.globalData.dyPhoneEncryptedData = null;
+    app.globalData.dyPhoneIv = null;
+    if (phoneCode && phoneData && phoneIv) {
+      app.globalData.prebuiltWebViewSrc = null;
+      this.setData({
+        src: buildWebViewSrc(targetPath, [
+          'dy_phone_code=' + encodeURIComponent(phoneCode),
+          'dy_phone_data=' + encodeURIComponent(phoneData),
+          'dy_phone_iv=' + encodeURIComponent(phoneIv),
+        ]),
+      });
+      return;
+    }
+
     const prebuilt = app.globalData.prebuiltWebViewSrc;
     app.globalData.prebuiltWebViewSrc = null;
     this.setData({
@@ -129,8 +147,30 @@ Page({
   },
 
   onShow() {
-    // 从 login/pay 等原生页返回：恢复上次 H5 同步的标题（微信侧靠 data.shareTitle + 自定义导航栏）
     applyNavTitle(this, this.data.shareTitle);
+    this.applyDyPhoneParamsToWebView();
+  },
+
+  /** 从 bind-phone 页带回的手机号参数，拼到 web-view URL 供 H5 dyAutoBindPhone 消费 */
+  applyDyPhoneParamsToWebView() {
+    const phoneCode = app.globalData.dyPhoneCode;
+    const phoneData = app.globalData.dyPhoneEncryptedData;
+    const phoneIv = app.globalData.dyPhoneIv;
+    if (!phoneCode || !phoneData || !phoneIv) return;
+
+    let base = app.globalData.dyReturnPath || this._sharePath || '/';
+    app.globalData.dyReturnPath = null;
+    app.globalData.dyPhoneCode = null;
+    app.globalData.dyPhoneEncryptedData = null;
+    app.globalData.dyPhoneIv = null;
+
+    this.setData({
+      src: buildWebViewSrc(base, [
+        'dy_phone_code=' + encodeURIComponent(phoneCode),
+        'dy_phone_data=' + encodeURIComponent(phoneData),
+        'dy_phone_iv=' + encodeURIComponent(phoneIv),
+      ]),
+    });
   },
 
   onWebViewMessage(e) {

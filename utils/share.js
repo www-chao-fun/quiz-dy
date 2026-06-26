@@ -13,6 +13,9 @@ function toH5Path(input) {
   try {
     const u = new URL(base);
     u.searchParams.delete('dy_code');
+    u.searchParams.delete('dy_phone_code');
+    u.searchParams.delete('dy_phone_data');
+    u.searchParams.delete('dy_phone_iv');
     return u.pathname + u.search + u.hash;
   } catch (e) {
     return '/';

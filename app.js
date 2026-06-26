@@ -3,6 +3,11 @@
 App({
   globalData: {
     dyCode: null,
+    dyPhoneCode: null,
+    dyPhoneEncryptedData: null,
+    dyPhoneIv: null,
+    dyReturnPath: null,
+    dyVerifyCode: null,
     prebuiltWebViewSrc: null,
     dyRewardAdVipResult: null,
   },

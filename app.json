@@ -3,6 +3,7 @@
     "pages/index/index",
     "pages/web/web",
     "pages/login/login",
+    "pages/bind-phone/bind-phone",
     "pages/pay/pay",
     "pages/order/order",
     "pages/reward-ad/reward-ad",

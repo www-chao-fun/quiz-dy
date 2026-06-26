@@ -1,0 +1,16 @@
+<view class="page">
+  <view class="brand">猜盐</view>
+  <view class="title">绑定手机号</view>
+  <view class="desc">授权手机号，用于登录或绑定当前账号</view>
+
+  <button
+    class="login-btn"
+    type="primary"
+    loading="{{loading}}"
+    disabled="{{loading}}"
+    open-type="getPhoneNumber"
+    bindgetphonenumber="onGetPhoneNumber"
+  >
+  {{ loading ? '正在授权…' : '手机号快捷绑定' }}
+  </button>
+</view>
