@@ -1,6 +1,6 @@
 <view class="page">
   <view class="brand">猜盐</view>
-  <view class="desc">{{ mode === 'verify' ? '使用抖音账号验证身份' : '使用抖音账号一键登录' }}</view>
+  <view class="desc">{{ mode === 'verify' ? '使用抖音账号验证身份' : '使用手机号或抖音账号登录' }}</view>
 
   <button
     tt:if="{{ mode === 'verify' }}"
@@ -13,16 +13,29 @@
     {{ loading ? '正在授权…' : '抖音授权验证' }}
   </button>
 
-  <button
-    tt:else
-    class="login-btn"
-    type="primary"
-    loading="{{loading}}"
-    disabled="{{loading}}"
-    bindtap="onTapLogin"
-  >
-    {{ loading ? '正在授权…' : '抖音授权登录' }}
-  </button>
+  <block tt:else>
+    <button
+      class="login-btn"
+      type="primary"
+      loading="{{loading}}"
+      disabled="{{loading}}"
+      open-type="getPhoneNumber"
+      bindgetphonenumber="onGetPhoneNumber"
+    >
+      {{ loading ? '正在授权…' : '手机号快捷登录' }}
+    </button>
+
+    <view class="or-divider">或使用抖音账号</view>
+
+    <button
+      class="login-btn login-btn-secondary"
+      loading="{{loading}}"
+      disabled="{{loading}}"
+      bindtap="onTapLogin"
+    >
+      {{ loading ? '正在授权…' : '抖音授权登录' }}
+    </button>
+  </block>
 
   <view class="tip" tt:if="{{ mode !== 'verify' }}">登录即代表你同意《用户协议》与《隐私政策》</view>
 </view>
