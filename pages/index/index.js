@@ -1,5 +1,5 @@
 // quiz-dy 小程序首页：抖音不允许首屏直接是 web-view，所以首页保持原生加载页。
-// 检测到网络可用后立即 redirectTo 到 /pages/web/web，由它去加载 H5。
+// 探活成功后至少展示 MIN_LOADING_MS，再 redirectTo 到 /pages/web/web 加载 H5。
 
 const shareUtil = require('../../utils/share.js');
 
@@ -20,9 +20,14 @@ const TAB_TO_TITLE = {
 
 // 与 app.json window.navigationBarTitleText 一致；从 web-view 返回时需主动恢复
 const INDEX_NAV_TITLE = '猜盐';
+const MIN_LOADING_MS = 1000;
 const NETWORK_RETRY_MS = 2000;
 const NETWORK_PROBE_TIMEOUT_MS = 3000;
 const NETWORK_PROBE_URL = `${shareUtil.H5_ORIGIN}/favicon.ico`;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function hasNetworkType() {
   return new Promise((resolve) => {
@@ -125,6 +130,7 @@ Page({
     this.setData({ offline: false });
 
     const h5Path = this._targetPath || '/';
+    const launchStartAt = Date.now();
     // 预拼 web-view URL 与探活并行，不阻塞跳转
     this._prebuildWebViewSrc(h5Path);
     const online = await hasNetwork();
@@ -132,6 +138,11 @@ Page({
       this._entering = false;
       this._showOffline();
       return;
+    }
+
+    const remainMs = Math.max(0, MIN_LOADING_MS - (Date.now() - launchStartAt));
+    if (remainMs > 0) {
+      await sleep(remainMs);
     }
 
     this._enterWeb();
